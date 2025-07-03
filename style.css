@@ -1,11 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
 
 body {
     font-family: 'Sarabun', sans-serif;
-    background-color: #f4f7f6;
+    background-color: #f0f2f5;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* Align to the top */
+    align-items: flex-start; /* จัดให้อยู่ด้านบน */
     min-height: 100vh;
     margin: 0;
     padding: 20px;
@@ -15,99 +15,124 @@ body {
 .container {
     background-color: #ffffff;
     padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
     width: 100%;
-    max-width: 700px;
+    max-width: 750px;
     text-align: center;
+    box-sizing: border-box;
 }
 
 h1 {
-    color: #333;
-    margin-bottom: 30px;
+    color: #2c3e50;
+    margin-bottom: 35px;
     font-weight: 700;
+    font-size: 2.2rem;
 }
 
 .input-section {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     margin-bottom: 30px;
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    flex-wrap: wrap; /* ให้ขึ้นบรรทัดใหม่เมื่อหน้าจอเล็ก */
     justify-content: center;
 }
 
 .input-section select,
 .input-section input[type="text"] {
     flex-grow: 1;
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 1rem;
+    padding: 14px 18px;
+    border: 1px solid #ced4da;
+    border-radius: 10px;
+    font-size: 1.05rem;
     font-family: 'Sarabun', sans-serif;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.input-section select:focus,
+.input-section input[type="text"]:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .input-section select {
-    max-width: 180px; /* Adjust as needed */
+    max-width: 200px; /* จำกัดความกว้างของ select box */
 }
 
 .input-section input[type="text"]::placeholder {
-    color: #bbb;
+    color: #a0a8b1;
 }
 
 .input-section button {
-    background-color: #4CAF50; /* Green */
+    background-color: #28a745; /* สีเขียว */
     color: white;
-    padding: 12px 20px;
+    padding: 14px 25px;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-family: 'Sarabun', sans-serif;
-    transition: background-color 0.3s ease;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    flex-shrink: 0; /* ไม่ให้หดตัว */
 }
 
 .input-section button:hover {
-    background-color: #45a049;
+    background-color: #218838;
+    transform: translateY(-2px);
+}
+
+.input-section button:active {
+    transform: translateY(0);
+}
+
+.input-section button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
 }
 
 .task-list {
     text-align: left;
+    margin-top: 20px;
 }
 
 .task-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: #f9f9f9;
-    padding: 15px 20px;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    border: 1px solid #eee;
+    background-color: #f8f9fa;
+    padding: 18px 22px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .task-item:hover {
-    background-color: #f0f0f0;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    background-color: #e2e6ea;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
 }
 
 .task-item.completed {
-    background-color: #e6ffe6; /* Lighter green for completed tasks */
+    background-color: #d4edda; /* สีเขียวอ่อนสำหรับงานที่เสร็จแล้ว */
     text-decoration: line-through;
-    opacity: 0.7;
+    opacity: 0.8;
 }
 
 .task-content {
     display: flex;
     align-items: center;
     flex-grow: 1;
+    cursor: pointer; /* ทำให้คลิกทั้งส่วนเพื่อติ๊กถูกได้ */
 }
 
 .task-content input[type="checkbox"] {
-    margin-right: 15px;
-    min-width: 20px; /* Ensure checkbox is visible */
-    min-height: 20px;
+    margin-right: 18px;
+    min-width: 22px; /* ขนาด checkbox */
+    min-height: 22px;
     cursor: pointer;
+    accent-color: #28a745; /* เปลี่ยนสี checkbox */
 }
 
 .task-details {
@@ -116,62 +141,94 @@ h1 {
 }
 
 .task-text {
-    font-size: 1.1rem;
-    color: #333;
-    font-weight: 500;
+    font-size: 1.15rem;
+    color: #343a40;
+    font-weight: 600;
+    line-height: 1.4;
 }
 
 .task-subject {
-    font-size: 0.9rem;
-    color: #666;
-    margin-top: 3px;
-    background-color: #e0e0e0;
-    padding: 3px 8px;
-    border-radius: 4px;
-    display: inline-block; /* To make padding work */
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 5px;
+    background-color: #e9ecef;
+    padding: 4px 10px;
+    border-radius: 6px;
+    display: inline-block;
+    font-weight: 400;
 }
 
 .delete-button {
-    background-color: #f44336; /* Red */
+    background-color: #dc3545; /* สีแดง */
     color: white;
     border: none;
-    padding: 8px 12px;
-    border-radius: 6px;
+    padding: 10px 16px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 0.9rem;
-    transition: background-color 0.3s ease;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-left: 15px; /* เว้นระยะจากข้อความ */
 }
 
 .delete-button:hover {
-    background-color: #da190b;
+    background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+.delete-button:active {
+    transform: translateY(0);
+}
+
+/* ข้อความเมื่อไม่มีงาน */
+.no-tasks-message,
+.loading-message {
+    text-align: center;
+    color: #888;
+    margin-top: 30px;
+    padding: 25px;
+    border: 1px dashed #ced4da;
+    border-radius: 10px;
+    background-color: #fefefe;
+    font-style: italic;
+    font-size: 1.1rem;
 }
 
 /* Responsive adjustments */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+        margin: 10px;
+    }
+    h1 {
+        font-size: 1.8rem;
+        margin-bottom: 25px;
+    }
     .input-section {
         flex-direction: column;
+        gap: 10px;
     }
-
-    .input-section select {
-        max-width: 100%;
-    }
-
+    .input-section select,
+    .input-section input[type="text"],
     .input-section button {
         width: 100%;
+        max-width: none; /* ยกเลิก max-width */
     }
-
     .task-item {
         flex-direction: column;
         align-items: flex-start;
-        padding: 10px 15px;
+        padding: 15px;
+        gap: 10px;
     }
-
     .task-content {
         width: 100%;
-        margin-bottom: 10px;
+        margin-bottom: 5px;
     }
-
     .delete-button {
-        align-self: flex-end;
+        align-self: flex-end; /* จัดปุ่มลบไปทางขวาด้านล่าง */
+        margin-left: 0;
+    }
+    .task-content input[type="checkbox"] {
+        margin-right: 10px;
     }
 }
