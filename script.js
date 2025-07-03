@@ -1,248 +1,264 @@
-// Supabase Client Initialization (ใช้คีย์ที่คุณให้มา)
-// **สำคัญมาก: แทนที่ YOUR_SUPABASE_URL และ YOUR_SUPABASE_ANON_KEY ด้วยคีย์จริงของคุณ**
-const SUPABASE_URL = 'https://xoscoszdlzchwyisvxbp.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhvc2Nvc3pkbHpjaHd5aXN2eGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NDIwNzIsImV4cCI6MjA2NzExODA3Mn0.nZhld0oB8vmwvLzwhxhISuD6D-inHP7UVKhYzDfr6KY';
+// Supabase Client Configuration
+// *** IMPORTANT: Replace with your actual Supabase Project URL and Anon Key ***
+const SUPABASE_URL = 'https://xoscoszdlzchwyisvxbp.supabase.co'; // Your Project URL
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhvc2Nvc3pkbHpjaHd5aXN2eGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NDIwNzIsImV4cCI6MjA2NzExODA3Mn0.nZhld0oB8vmwvLzwhxhISuD6D-inHP7UVKhYzDfr6KY'; // Your Anon Public Key
 
-let _supabase = null; // จะกำหนดค่าเมื่อ DOM โหลดเสร็จ
+let supabaseClient = null; // Will be initialized on DOMContentLoaded
 
-console.log('--- Script Initializing ---'); // แสดงเมื่อ script เริ่มโหลด
+// Global DOM Element References (will be set on DOMContentLoaded)
+let todoTitleInput, todoCategorySelect, addTodoButton, todoList, initialMessage;
 
-// --- Global DOM Elements (จะถูกกำหนดค่าเมื่อ DOMContentLoaded) ---
-let subjectSelect, taskInput, addTaskButton, taskList;
+// --- Utility Functions for Console Logging ---
+const log = (message, ...args) => console.log(`[APP LOG]: ${message}`, ...args);
+const warn = (message, ...args) => console.warn(`[APP WARN]: ${message}`, ...args);
+const error = (message, ...args) => console.error(`[APP ERROR]: ${message}`, ...args);
 
-// --- Functions ---
+// --- Core Application Functions ---
 
 /**
- * ฟังก์ชันสำหรับดึงงานทั้งหมดจาก Supabase และแสดงผล
+ * Fetches all todos from Supabase and renders them to the UI.
  */
-async function fetchTasks() {
-    console.log('Function: fetchTasks - กำลังพยายามดึงงาน...');
-    taskList.innerHTML = '<p class="loading-message">กำลังโหลดงาน...</p>'; // แสดงข้อความกำลังโหลด
+async function fetchTodos() {
+    log('Attempting to fetch todos...');
+    initialMessage.textContent = 'กำลังโหลดรายการ...';
+    initialMessage.className = 'initial-message'; // Reset message class
 
     try {
-        const { data, error } = await _supabase
-            .from('tasks') // ตรวจสอบว่าชื่อตาราง 'tasks' ตรงกันใน Supabase เป๊ะๆ
+        const { data, error: dbError } = await supabaseClient
+            .from('todos') // Make sure your table name is 'todos'
             .select('*')
-            .order('created_at', { ascending: false }); // เรียงลำดับตามเวลาสร้างใหม่สุดอยู่บน
+            .order('created_at', { ascending: false });
 
-        if (error) {
-            console.error('Error in fetchTasks:', error.message);
-            taskList.innerHTML = `<p class="no-tasks-message error-message">เกิดข้อผิดพลาดในการดึงข้อมูล: ${error.message}. โปรดตรวจสอบ Console.</p>`;
+        if (dbError) {
+            error('Error fetching todos:', dbError.message);
+            initialMessage.textContent = `เกิดข้อผิดพลาดในการดึงข้อมูล: ${dbError.message}`;
+            initialMessage.className = 'error-message';
+            todoList.innerHTML = ''; // Clear any existing items
             return;
         }
 
-        console.log('Function: fetchTasks - ดึงงานสำเร็จแล้ว:', data);
-        renderTasks(data); // เรียกฟังก์ชันแสดงผล
+        log('Todos fetched successfully:', data);
+        renderTodos(data);
     } catch (e) {
-        console.error('Critical Error in fetchTasks (try/catch):', e.message, e);
-        taskList.innerHTML = `<p class="no-tasks-message error-message">เกิดข้อผิดพลาดร้ายแรงในการดึงข้อมูล: ${e.message}. โปรดดู Console.</p>`;
+        error('Critical error in fetchTodos (try/catch):', e.message, e);
+        initialMessage.textContent = `เกิดข้อผิดพลาดร้ายแรง: ${e.message}`;
+        initialMessage.className = 'error-message';
+        todoList.innerHTML = ''; // Clear any existing items
     }
 }
 
 /**
- * ฟังก์ชันสำหรับแสดงรายการงานใน UI
- * @param {Array} tasks - อาร์เรย์ของอ็อบเจกต์งาน
+ * Renders an array of todo items to the UI.
+ * @param {Array<Object>} todos - An array of todo objects from Supabase.
  */
-function renderTasks(tasks) {
-    console.log('Function: renderTasks - กำลังแสดงผลงาน:', tasks);
-    
-    // ตรวจสอบว่า taskList element มีอยู่จริง
-    if (!taskList) {
-        console.error('Error: taskList element not found during renderTasks.');
+function renderTodos(todos) {
+    log('Rendering todos:', todos);
+
+    // Ensure todoList element exists
+    if (!todoList) {
+        error('todoList element not found during renderTodos.');
         return;
     }
 
-    if (!tasks || tasks.length === 0) {
-        taskList.innerHTML = '<p class="no-tasks-message">ยังไม่มีงานในรายการ เพิ่มงานใหม่ได้เลย!</p>';
-        console.log('Function: renderTasks - ไม่มีงานให้แสดง, แสดงข้อความเปล่า.');
+    todoList.innerHTML = ''; // Clear current list
+
+    if (!todos || todos.length === 0) {
+        initialMessage.textContent = 'ยังไม่มีสิ่งที่ต้องทำ เพิ่มใหม่ได้เลย!';
+        initialMessage.className = 'no-todos-message';
+        todoList.appendChild(initialMessage); // Show the message
+        log('No todos to display.');
         return;
     }
 
-    taskList.innerHTML = ''; // ลบงานปัจจุบันทั้งหมดก่อนแสดงใหม่
+    // Hide initial/empty message if todos exist
+    if (initialMessage.parentNode === todoList) {
+        todoList.removeChild(initialMessage);
+    }
 
-    tasks.forEach(task => {
-        const taskItem = document.createElement('div');
-        taskItem.className = `task-item ${task.is_complete ? 'completed' : ''}`;
-        taskItem.dataset.id = task.id; // เก็บ ID งานจาก Supabase เพื่อใช้ในการอัปเดต/ลบ
+    todos.forEach(todo => {
+        const todoItem = document.createElement('div');
+        todoItem.className = `todo-item ${todo.is_done ? 'done' : ''}`;
+        todoItem.dataset.id = todo.id; // Store Supabase ID for operations
 
-        taskItem.innerHTML = `
-            <div class="task-content">
-                <input type="checkbox" ${task.is_complete ? 'checked' : ''}>
-                <div class="task-details">
-                    <span class="task-text">${task.description}</span>
-                    <span class="task-subject">${task.subject}</span>
-                </div>
+        todoItem.innerHTML = `
+            <input type="checkbox" class="todo-checkbox" ${todo.is_done ? 'checked' : ''}>
+            <div class="todo-content">
+                <span class="todo-title">${todo.title}</span>
+                <span class="todo-category">${todo.category}</span>
             </div>
             <button class="delete-button">ลบ</button>
         `;
 
-        // เพิ่ม Event Listener ให้กับ checkbox และปุ่มลบ
-        // ใช้ Event delegation สำหรับ checkbox ที่ task-content เพื่อให้คลิกได้ง่ายขึ้น
-        taskItem.querySelector('.task-content').addEventListener('click', (event) => {
-            // ตรวจสอบว่าไม่ได้คลิกโดน checkbox โดยตรง (เพราะ checkbox มี listener ของตัวเอง)
-            if (event.target.type !== 'checkbox') {
-                const checkbox = taskItem.querySelector('input[type="checkbox"]');
-                checkbox.checked = !checkbox.checked; // สลับสถานะ checkbox
-                toggleTaskComplete({ target: checkbox }); // เรียกฟังก์ชัน toggleTaskComplete
-            }
-        });
-        taskItem.querySelector('input[type="checkbox"]').addEventListener('change', toggleTaskComplete);
-        taskItem.querySelector('.delete-button').addEventListener('click', deleteTask);
+        // Add event listeners for the new elements
+        todoItem.querySelector('.todo-checkbox').addEventListener('change', toggleTodoStatus);
+        todoItem.querySelector('.delete-button').addEventListener('click', deleteTodo);
 
-        taskList.appendChild(taskItem);
-        console.log(`Function: renderTasks - เพิ่มงาน "${task.description}" (ID: ${task.id}) ใน UI แล้ว.`);
+        todoList.appendChild(todoItem);
+        log(`Todo item "${todo.title}" (ID: ${todo.id}) added to UI.`);
     });
 }
 
 /**
- * ฟังก์ชันสำหรับเพิ่มงานใหม่ใน Supabase
+ * Adds a new todo item to Supabase.
  */
-async function addTask() {
-    const subject = subjectSelect.value;
-    const description = taskInput.value.trim();
+async function addTodo() {
+    const title = todoTitleInput.value.trim();
+    const category = todoCategorySelect.value;
 
-    console.log('Function: addTask - กำลังพยายามเพิ่มงาน:', { subject, description });
+    log('Attempting to add todo:', { title, category });
 
-    if (!subject) {
-        alert('กรุณาเลือกวิชา');
-        console.warn('Function: addTask - การเพิ่มงานล้มเหลว: ไม่ได้เลือกวิชา.');
+    if (!title) {
+        alert('กรุณาใส่สิ่งที่ต้องทำ');
+        warn('Add todo failed: Missing title.');
         return;
     }
-    if (!description) {
-        alert('กรุณาใส่รายละเอียดงาน');
-        console.warn('Function: addTask - การเพิ่มงานล้มเหลว: ไม่ได้ใส่รายละเอียดงาน.');
+    if (!category) {
+        alert('กรุณาเลือกหมวดหมู่');
+        warn('Add todo failed: Missing category.');
         return;
     }
 
-    // เพิ่มตัวแสดงสถานะกำลังโหลดบนปุ่ม
-    addTaskButton.disabled = true;
-    addTaskButton.textContent = 'กำลังเพิ่ม...';
+    addTodoButton.disabled = true;
+    addTodoButton.textContent = 'กำลังเพิ่ม...';
 
     try {
-        const { data, error } = await _supabase
-            .from('tasks')
-            .insert([{ subject: subject, description: description, is_complete: false }]);
+        const { data, error: dbError } = await supabaseClient
+            .from('todos')
+            .insert([{ title: title, category: category, is_done: false }]);
 
-        if (error) {
-            console.error('Error in addTask (Supabase insert):', error.message);
-            alert(`เกิดข้อผิดพลาดในการเพิ่มงาน: ${error.message}. โปรดตรวจสอบ Console.`);
+        if (dbError) {
+            error('Error adding todo to Supabase:', dbError.message);
+            alert(`เกิดข้อผิดพลาดในการเพิ่มสิ่งที่ต้องทำ: ${dbError.message}`);
             return;
         }
 
-        console.log('Function: addTask - เพิ่มงานใน Supabase สำเร็จแล้ว:', data);
-        taskInput.value = ''; // ล้างช่องใส่ข้อมูล
-        subjectSelect.value = ''; // รีเซ็ตการเลือกวิชา
-        fetchTasks(); // ดึงงานและแสดงผลใหม่ เพื่อให้เห็นงานที่เพิ่มเข้ามา
+        log('Todo added successfully:', data);
+        todoTitleInput.value = ''; // Clear input
+        todoCategorySelect.value = ''; // Reset select
+        fetchTodos(); // Refresh the list
     } catch (e) {
-        console.error('Critical Error in addTask (try/catch):', e.message, e);
-        alert(`เกิดข้อผิดพลาดร้ายแรงในการเพิ่มงาน: ${e.message}. โปรดดู Console.`);
+        error('Critical error in addTodo (try/catch):', e.message, e);
+        alert(`เกิดข้อผิดพลาดร้ายแรงในการเพิ่ม: ${e.message}`);
     } finally {
-        // ไม่ว่าจะสำเร็จหรือล้มเหลว ก็คืนค่าปุ่มกลับเป็นปกติ
-        addTaskButton.disabled = false;
-        addTaskButton.textContent = 'เพิ่มงาน';
+        addTodoButton.disabled = false;
+        addTodoButton.textContent = 'เพิ่ม';
     }
 }
 
 /**
- * ฟังก์ชันสำหรับสลับสถานะการทำเครื่องหมายว่างานเสร็จสิ้นใน Supabase
- * @param {Event} event - Event object จากการเปลี่ยนแปลง checkbox
+ * Toggles the 'is_done' status of a todo in Supabase.
+ * @param {Event} event - The change event from the checkbox.
  */
-async function toggleTaskComplete(event) {
-    const taskItem = event.target.closest('.task-item');
-    const taskId = taskItem.dataset.id;
-    const isComplete = event.target.checked;
+async function toggleTodoStatus(event) {
+    const todoItem = event.target.closest('.todo-item');
+    const todoId = todoItem.dataset.id;
+    const isDone = event.target.checked;
 
-    console.log('Function: toggleTaskComplete - กำลังพยายามสลับสถานะของงาน:', { taskId, isComplete });
+    log('Attempting to toggle todo status:', { todoId, isDone });
 
     try {
-        const { error } = await _supabase
-            .from('tasks')
-            .update({ is_complete: isComplete })
-            .eq('id', taskId); // อัปเดตงานตาม ID
+        const { error: dbError } = await supabaseClient
+            .from('todos')
+            .update({ is_done: isDone })
+            .eq('id', todoId);
 
-        if (error) {
-            console.error('Error in toggleTaskComplete:', error.message);
-            alert(`เกิดข้อผิดพลาดในการอัปเดตสถานะงาน: ${error.message}. โปรดตรวจสอบ Console.`);
-            event.target.checked = !isComplete; // คืนค่า checkbox ถ้าอัปเดตไม่สำเร็จ
+        if (dbError) {
+            error('Error updating todo status:', dbError.message);
+            alert(`เกิดข้อผิดพลาดในการอัปเดตสถานะ: ${dbError.message}`);
+            event.target.checked = !isDone; // Revert checkbox state
             return;
         }
-        console.log('Function: toggleTaskComplete - อัปเดตสถานะงานสำเร็จแล้ว:', { taskId, isComplete });
-        taskItem.classList.toggle('completed', isComplete); // สลับ class CSS
+
+        log('Todo status updated successfully:', { todoId, isDone });
+        todoItem.classList.toggle('done', isDone); // Apply/remove 'done' class
     } catch (e) {
-        console.error('Critical Error in toggleTaskComplete (try/catch):', e.message, e);
-        alert(`เกิดข้อผิดพลาดร้ายแรงในการอัปเดตสถานะ: ${e.message}. โปรดดู Console.`);
-        event.target.checked = !isComplete; // คืนค่า checkbox หากเกิด error ร้ายแรง
+        error('Critical error in toggleTodoStatus (try/catch):', e.message, e);
+        alert(`เกิดข้อผิดพลาดร้ายแรงในการอัปเดต: ${e.message}`);
+        event.target.checked = !isDone; // Revert checkbox state
     }
 }
 
 /**
- * ฟังก์ชันสำหรับลบงานจาก Supabase
- * @param {Event} event - Event object จากการคลิกปุ่มลบ
+ * Deletes a todo item from Supabase.
+ * @param {Event} event - The click event from the delete button.
  */
-async function deleteTask(event) {
-    const taskItem = event.target.closest('.task-item');
-    const taskId = taskItem.dataset.id;
+async function deleteTodo(event) {
+    const todoItem = event.target.closest('.todo-item');
+    const todoId = todoItem.dataset.id;
 
-    console.log('Function: deleteTask - กำลังพยายามลบงาน:', taskId);
+    log('Attempting to delete todo:', todoId);
 
-    if (!confirm('คุณแน่ใจหรือไม่ที่ต้องการลบงานนี้?')) {
-        console.log('Function: deleteTask - ผู้ใช้ยกเลิกการลบ.');
+    if (!confirm('คุณแน่ใจหรือไม่ที่ต้องการลบสิ่งนี้?')) {
+        log('Delete cancelled by user.');
         return;
     }
 
     try {
-        const { error } = await _supabase
-            .from('tasks')
+        const { error: dbError } = await supabaseClient
+            .from('todos')
             .delete()
-            .eq('id', taskId); // ลบงานตาม ID
+            .eq('id', todoId);
 
-        if (error) {
-            console.error('Error in deleteTask:', error.message);
-            alert(`เกิดข้อผิดพลาดในการลบงาน: ${error.message}. โปรดตรวจสอบ Console.`);
+        if (dbError) {
+            error('Error deleting todo:', dbError.message);
+            alert(`เกิดข้อผิดพลาดในการลบ: ${dbError.message}`);
             return;
         }
-        console.log('Function: deleteTask - ลบงานสำเร็จแล้ว:', taskId);
-        taskItem.remove(); // ลบ Element ออกจาก UI ทันที
+
+        log('Todo deleted successfully:', todoId);
+        todoItem.remove(); // Remove from UI
+
+        // If no todos left, show the empty message
+        if (todoList.children.length === 0) {
+            initialMessage.textContent = 'ยังไม่มีสิ่งที่ต้องทำ เพิ่มใหม่ได้เลย!';
+            initialMessage.className = 'no-todos-message';
+            todoList.appendChild(initialMessage);
+        }
     } catch (e) {
-        console.error('Critical Error in deleteTask (try/catch):', e.message, e);
-        alert(`เกิดข้อผิดพลาดร้ายแรงในการลบงาน: ${e.message}. โปรดดู Console.`);
+        error('Critical error in deleteTodo (try/catch):', e.message, e);
+        alert(`เกิดข้อผิดพลาดร้ายแรงในการลบ: ${e.message}`);
     }
 }
 
-// --- Event Listener หลัก: รอให้ DOM โหลดเสร็จก่อนทำงาน ---
+// --- Initialize Application on DOM Load ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Event: DOMContentLoaded - DOM โหลดสมบูรณ์แล้ว. กำลังเริ่มต้น...');
+    log('DOM Content Loaded. Initializing application...');
 
-    // 1. Initialize Supabase client
+    // 1. Initialize Supabase Client
     try {
-        _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('Supabase client created successfully.');
+        // 'supabase' object comes from the CDN script loaded in index.html
+        if (typeof supabase === 'undefined' || !supabase.createClient) {
+            throw new Error("Supabase client library not found. Make sure <script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'></script> is loaded correctly in index.html.");
+        }
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        log('Supabase client initialized successfully.');
     } catch (e) {
-        console.error('Error creating Supabase client:', e.message, e);
-        alert(`ไม่สามารถสร้าง Supabase Client ได้: ${e.message}. โปรดตรวจสอบ URL/Key ใน script.js.`);
-        return; // หยุดการทำงานถ้า Supabase client สร้างไม่ได้
+        error('Failed to initialize Supabase client:', e.message, e);
+        alert(`ข้อผิดพลาดร้ายแรง: ไม่สามารถสร้าง Supabase Client ได้. ${e.message}. โปรดตรวจสอบ Console และไฟล์ index.html.`);
+        return; // Stop execution if client cannot be initialized
     }
 
-    // 2. Get DOM Elements
-    subjectSelect = document.getElementById('subjectSelect');
-    taskInput = document.getElementById('taskInput');
-    addTaskButton = document.getElementById('addTaskButton');
-    taskList = document.getElementById('taskList'); // Make sure this is globally available or passed
+    // 2. Get DOM Element References
+    todoTitleInput = document.getElementById('todoTitleInput');
+    todoCategorySelect = document.getElementById('todoCategorySelect');
+    addTodoButton = document.getElementById('addTodoButton');
+    todoList = document.getElementById('todoList');
+    initialMessage = document.getElementById('initialMessage');
 
-    // Validate if elements are found
-    if (!subjectSelect || !taskInput || !addTaskButton || !taskList) {
-        console.error('Error: One or more critical DOM elements not found.');
+    // Validate if critical DOM elements are found
+    if (!todoTitleInput || !todoCategorySelect || !addTodoButton || !todoList || !initialMessage) {
+        error('One or more critical DOM elements not found. Check your index.html IDs.');
         alert('เกิดข้อผิดพลาด: ไม่พบส่วนประกอบสำคัญของหน้าเว็บ. โปรดตรวจสอบ ID ใน HTML.');
-        return; // หยุดการทำงานถ้าหา Element ไม่เจอ
+        return; // Stop execution if elements are missing
     }
-    console.log('DOM Elements successfully referenced.');
+    log('All critical DOM elements referenced successfully.');
 
     // 3. Attach Event Listeners
-    addTaskButton.addEventListener('click', addTask);
-    console.log('Event Listener: Add Task button event listener attached.');
+    addTodoButton.addEventListener('click', addTodo);
+    log('Add Todo button event listener attached.');
 
-    // 4. Initial fetch of tasks
-    fetchTasks();
+    // 4. Initial Load of Todos
+    fetchTodos();
 });
 
-console.log('--- Script End ---'); // แสดงเมื่อ script โหลดเสร็จ (แต่ DOMContentLoaded อาจยังไม่ทำงาน)
+log('Script finished parsing.'); // This will show when the script file itself is parsed.
