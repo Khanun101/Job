@@ -3,17 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบันทึกงาน</title>
+    <title>ระบบบันทึกงานของฉัน</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <script src="script.js"></script> 
 </head>
 <body>
     <div class="container">
-        <h1>บันทึกงานของฉัน</h1>
+        <h1>บันทึกงานที่ต้องทำ</h1>
 
         <div class="input-section">
             <select id="subjectSelect">
@@ -33,13 +30,15 @@
                 <option value="ชีวะ">ชีวะ</option>
                 <option value="พละ">พละ</option>
             </select>
-            <input type="text" id="taskInput" placeholder="เพิ่มงานที่ต้องทำ...">
+            <input type="text" id="taskInput" placeholder="เพิ่มรายละเอียดงานที่นี่...">
             <button id="addTaskButton">เพิ่มงาน</button>
         </div>
 
         <div class="task-list" id="taskList">
-            </div>
+            <p class="loading-message">กำลังโหลดงาน...</p>
+        </div>
     </div>
 
-    </body>
+    <script src="script.js"></script>
+</body>
 </html>
