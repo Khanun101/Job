@@ -2,46 +2,46 @@
 const SUPABASE_URL = 'https://xoscoszdlzchwyisvxbp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhvc2Nvc3pkbHpjaHd5aXN2eGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NDIwNzIsImV4cCI6MjA2NzExODA3Mn0.nZhld0oB8vmwvLzwhxhISuD6D-inHP7UVKhYzDfr6KY';
 
-const { createClient } = supabase;
-const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let _supabase; // ประกาศตัวแปรนี้ไว้ข้างนอก แต่จะกำหนดค่าใน DOMContentLoaded
 
-console.log('Supabase Client เริ่มต้นใช้งานแล้ว.');
-console.log('Supabase URL:', SUPABASE_URL);
-console.log('Supabase Anon Key:', SUPABASE_ANON_KEY ? 'โหลดคีย์แล้ว' : 'คีย์หายไป!'); // ไม่บันทึกคีย์ทั้งหมดเพื่อความปลอดภัย
-
-// ส่วนประกอบ DOM
-const subjectSelect = document.getElementById('subjectSelect');
-const taskInput = document.getElementById('taskInput');
-const addTaskButton = document.getElementById('addTaskButton');
-const taskList = document.getElementById('taskList');
-
-console.log('โหลดส่วนประกอบ DOM แล้ว:', { subjectSelect, taskInput, addTaskButton, taskList });
+console.log('--- Script Start ---');
 
 // --- ฟังก์ชันต่างๆ ---
 
 // ฟังก์ชันสำหรับดึงงานจาก Supabase
 async function fetchTasks() {
-    console.log('กำลังพยายามดึงงาน...');
-    const { data, error } = await _supabase
-        .from('tasks') // ตรวจสอบให้แน่ใจว่าชื่อตาราง 'tasks' ตรงกันใน Supabase เป๊ะๆ
-        .select('*')
-        .order('created_at', { ascending: false });
+    console.log('Function: fetchTasks - กำลังพยายามดึงงาน...');
+    try {
+        const { data, error } = await _supabase
+            .from('tasks') // ตรวจสอบให้แน่ใจว่าชื่อตาราง 'tasks' ตรงกันใน Supabase เป๊ะๆ
+            .select('*')
+            .order('created_at', { ascending: false });
 
-    if (error) {
-        console.error('เกิดข้อผิดพลาดในการดึงงาน:', error.message);
-        alert(`เกิดข้อผิดพลาดในการดึงข้อมูล: ${error.message}. กรุณาตรวจสอบ Console.`);
-        return;
+        if (error) {
+            console.error('Error in fetchTasks:', error.message);
+            alert(`เกิดข้อผิดพลาดในการดึงข้อมูล: ${error.message}. โปรดตรวจสอบ Console.`);
+            return;
+        }
+        console.log('Function: fetchTasks - ดึงงานสำเร็จแล้ว:', data);
+        renderTasks(data);
+    } catch (e) {
+        console.error('Critical Error in fetchTasks (try/catch):', e.message, e);
+        alert(`เกิดข้อผิดพลาดร้ายแรงในการดึงข้อมูล: ${e.message}. โปรดดู Console.`);
     }
-    console.log('ดึงงานสำเร็จแล้ว:', data);
-    renderTasks(data);
 }
 
 // ฟังก์ชันสำหรับแสดงงานใน UI
 function renderTasks(tasks) {
-    console.log('กำลังแสดงผลงาน:', tasks);
+    console.log('Function: renderTasks - กำลังแสดงผลงาน:', tasks);
+    const taskList = document.getElementById('taskList'); // ดึง element มาใน function เพื่อความแน่ใจ
+    if (!taskList) {
+        console.error('Error: taskList element not found during renderTasks.');
+        return;
+    }
+
     if (!tasks || tasks.length === 0) {
         taskList.innerHTML = '<p class="no-tasks-message">ยังไม่มีงานในรายการ เพิ่มงานใหม่ได้เลย!</p>';
-        console.log('ไม่มีงานให้แสดง, แสดงข้อความเปล่า.');
+        console.log('Function: renderTasks - ไม่มีงานให้แสดง, แสดงข้อความเปล่า.');
         return;
     }
     taskList.innerHTML = ''; // ลบงานปัจจุบันทั้งหมด
@@ -66,44 +66,61 @@ function renderTasks(tasks) {
         taskItem.querySelector('.delete-button').addEventListener('click', deleteTask);
 
         taskList.appendChild(taskItem);
-        console.log(`เพิ่มงานใน UI แล้ว: ${task.description} (${task.subject})`);
+        console.log(`Function: renderTasks - เพิ่มงานใน UI แล้ว: ${task.description} (${task.subject})`);
     });
 }
 
 // ฟังก์ชันสำหรับเพิ่มงานใหม่
 async function addTask() {
+    const subjectSelect = document.getElementById('subjectSelect');
+    const taskInput = document.getElementById('taskInput');
+    const addTaskButton = document.getElementById('addTaskButton');
+
+    if (!subjectSelect || !taskInput || !addTaskButton) {
+        console.error('Error: One or more input elements not found during addTask.');
+        alert('เกิดข้อผิดพลาด: ไม่พบส่วนประกอบสำหรับเพิ่มงาน');
+        return;
+    }
+
     const subject = subjectSelect.value;
     const description = taskInput.value.trim();
 
-    console.log('กำลังพยายามเพิ่มงาน:', { subject, description });
+    console.log('Function: addTask - กำลังพยายามเพิ่มงาน:', { subject, description });
 
     if (!subject || !description) {
         alert('กรุณาเลือกวิชาและใส่ชื่องาน');
-        console.warn('การเพิ่มงานล้มเหลว: ไม่ได้เลือกวิชาหรือไม่ได้ใส่รายละเอียดงาน');
+        console.warn('Function: addTask - การเพิ่มงานล้มเหลว: ไม่ได้เลือกวิชาหรือไม่ได้ใส่รายละเอียดงาน');
         return;
     }
 
-    // เพิ่มตัวแสดงสถานะกำลังโหลด (ไม่บังคับ แต่ดีต่อ UX)
+    // เพิ่มตัวแสดงสถานะกำลังโหลด
     addTaskButton.disabled = true;
     addTaskButton.textContent = 'กำลังเพิ่ม...';
 
-    const { data, error } = await _supabase
-        .from('tasks')
-        .insert([{ subject: subject, description: description, is_complete: false }]);
+    try {
+        const { data, error } = await _supabase
+            .from('tasks')
+            .insert([{ subject: subject, description: description, is_complete: false }]);
 
-    addTaskButton.disabled = false;
-    addTaskButton.textContent = 'เพิ่มงาน';
+        if (error) {
+            console.error('Error in addTask (Supabase insert):', error.message);
+            alert(`เกิดข้อผิดพลาดในการเพิ่มงาน: ${error.message}. โปรดตรวจสอบ Console.`);
+            return;
+        }
 
-    if (error) {
-        console.error('เกิดข้อผิดพลาดในการเพิ่มงาน:', error.message);
-        alert(`เกิดข้อผิดพลาดในการเพิ่มงาน: ${error.message}. กรุณาตรวจสอบ Console.`);
-        return;
+        console.log('Function: addTask - เพิ่มงานใน Supabase สำเร็จแล้ว:', data);
+        taskInput.value = ''; // ล้างช่องใส่ข้อมูล
+        subjectSelect.value = ''; // รีเซ็ตการเลือกวิชา
+        fetchTasks(); // ดึงงานและแสดงผลใหม่ เพื่อให้เห็นงานที่เพิ่มเข้ามา
+
+    } catch (e) {
+        console.error('Critical Error in addTask (try/catch):', e.message, e);
+        alert(`เกิดข้อผิดพลาดร้ายแรงในการเพิ่มงาน: ${e.message}. โปรดดู Console.`);
+    } finally {
+        // ไม่ว่าจะสำเร็จหรือล้มเหลว ก็คืนค่าปุ่ม
+        addTaskButton.disabled = false;
+        addTaskButton.textContent = 'เพิ่มงาน';
     }
-
-    console.log('เพิ่มงานใน Supabase สำเร็จแล้ว:', data);
-    taskInput.value = ''; // ล้างช่องใส่ข้อมูล
-    subjectSelect.value = ''; // รีเซ็ตการเลือกวิชา
-    fetchTasks(); // ดึงงานและแสดงผลใหม่ เพื่อให้เห็นงานที่เพิ่มเข้ามา
 }
 
 // ฟังก์ชันสำหรับสลับสถานะการทำเครื่องหมายว่างานเสร็จสิ้น
@@ -112,22 +129,28 @@ async function toggleTaskComplete(event) {
     const taskId = taskItem.dataset.id;
     const isComplete = event.target.checked;
 
-    console.log('กำลังพยายามสลับสถานะการเสร็จสิ้นของงาน:', { taskId, isComplete });
+    console.log('Function: toggleTaskComplete - กำลังพยายามสลับสถานะการเสร็จสิ้นของงาน:', { taskId, isComplete });
 
-    const { error } = await _supabase
-        .from('tasks')
-        .update({ is_complete: isComplete })
-        .eq('id', taskId);
+    try {
+        const { error } = await _supabase
+            .from('tasks')
+            .update({ is_complete: isComplete })
+            .eq('id', taskId);
 
-    if (error) {
-        console.error('เกิดข้อผิดพลาดในการอัปเดตสถานะงาน:', error.message);
-        alert(`เกิดข้อผิดพลาดในการอัปเดตสถานะงาน: ${error.message}. กรุณาตรวจสอบ Console.`);
-        // คืนค่า checkbox ถ้าการอัปเดตล้มเหลว
-        event.target.checked = !isComplete;
-        return;
+        if (error) {
+            console.error('Error in toggleTaskComplete:', error.message);
+            alert(`เกิดข้อผิดพลาดในการอัปเดตสถานะงาน: ${error.message}. โปรดตรวจสอบ Console.`);
+            // คืนค่า checkbox ถ้าการอัปเดตล้มเหลว
+            event.target.checked = !isComplete;
+            return;
+        }
+        console.log('Function: toggleTaskComplete - อัปเดตสถานะงานสำเร็จแล้ว:', { taskId, isComplete });
+        taskItem.classList.toggle('completed', isComplete); // สลับ class CSS
+    } catch (e) {
+        console.error('Critical Error in toggleTaskComplete (try/catch):', e.message, e);
+        alert(`เกิดข้อผิดพลาดร้ายแรงในการอัปเดตสถานะ: ${e.message}. โปรดดู Console.`);
+        event.target.checked = !isComplete; // คืนค่า checkbox หากเกิด error ร้ายแรง
     }
-    console.log('อัปเดตสถานะงานสำเร็จแล้ว:', { taskId, isComplete });
-    taskItem.classList.toggle('completed', isComplete); // สลับ class CSS
 }
 
 // ฟังก์ชันสำหรับลบงาน
@@ -135,41 +158,69 @@ async function deleteTask(event) {
     const taskItem = event.target.closest('.task-item');
     const taskId = taskItem.dataset.id;
 
-    console.log('กำลังพยายามลบงาน:', taskId);
+    console.log('Function: deleteTask - กำลังพยายามลบงาน:', taskId);
 
     if (!confirm('คุณแน่ใจหรือไม่ที่ต้องการลบงานนี้?')) {
-        console.log('ผู้ใช้ยกเลิกการลบ.');
+        console.log('Function: deleteTask - ผู้ใช้ยกเลิกการลบ.');
         return;
     }
 
-    const { error } = await _supabase
-        .from('tasks')
-        .delete()
-        .eq('id', taskId);
+    try {
+        const { error } = await _supabase
+            .from('tasks')
+            .delete()
+            .eq('id', taskId);
 
-    if (error) {
-        console.error('เกิดข้อผิดพลาดในการลบงาน:', error.message);
-        alert(`เกิดข้อผิดพลาดในการลบงาน: ${error.message}. กรุณาตรวจสอบ Console.`);
-        return;
+        if (error) {
+            console.error('Error in deleteTask:', error.message);
+            alert(`เกิดข้อผิดพลาดในการลบงาน: ${error.message}. โปรดตรวจสอบ Console.`);
+            return;
+        }
+        console.log('Function: deleteTask - ลบงานสำเร็จแล้ว:', taskId);
+        taskItem.remove(); // ลบออกจาก UI
+    } catch (e) {
+        console.error('Critical Error in deleteTask (try/catch):', e.message, e);
+        alert(`เกิดข้อผิดพลาดร้ายแรงในการลบงาน: ${e.message}. โปรดดู Console.`);
     }
-    console.log('ลบงานสำเร็จแล้ว:', taskId);
-    taskItem.remove(); // ลบออกจาก UI
 }
 
-// --- Event Listener ต่างๆ ---
-addTaskButton.addEventListener('click', addTask);
-console.log('ผูก Event Listener สำหรับปุ่มเพิ่มงานแล้ว.');
-
-// โหลดงานเริ่มต้นเมื่อหน้าเว็บโหลดเสร็จ
+// --- Event Listener หลัก (ผูกใน DOMContentLoaded เพื่อความแน่ใจว่า Elements พร้อมแล้ว) ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM โหลดสมบูรณ์แล้ว. กำลังเริ่มต้น fetchTasks...');
+    console.log('DOM Content Loaded. Initializing Supabase client and Event Listeners...');
+
+    // ตรวจสอบว่า Supabase client ถูกสร้างขึ้นอย่างถูกต้อง
+    try {
+        _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase client created successfully within DOMContentLoaded.');
+    } catch (e) {
+        console.error('Error creating Supabase client:', e.message, e);
+        alert(`ไม่สามารถสร้าง Supabase Client ได้: ${e.message}. โปรดตรวจสอบ URL/Key ใน script.js.`);
+        return; // หยุดการทำงานถ้า Supabase client สร้างไม่ได้
+    }
+
+    const addTaskButton = document.getElementById('addTaskButton');
+    if (addTaskButton) {
+        addTaskButton.addEventListener('click', addTask);
+        console.log('Event Listener: Add Task button event listener attached.');
+    } else {
+        console.error('Error: addTaskButton not found. Cannot attach event listener.');
+        alert('ปุ่ม "เพิ่มงาน" ไม่พบ! ตรวจสอบ id ใน HTML.');
+    }
+
+    // เรียกดึงงานครั้งแรก
     fetchTasks();
 });
 
-// เพิ่ม CSS สำหรับข้อความเมื่อไม่มีงาน (เพิ่มใน style.css ของคุณ)
+console.log('--- Script End ---');
+
+// อย่าลืมเพิ่ม CSS นี้ใน style.css หากยังไม่มี
 // .no-tasks-message {
 //     text-align: center;
 //     color: #888;
 //     margin-top: 20px;
+//     padding: 20px;
+//     border: 1px dashed #ccc;
+//     border-radius: 8px;
+//     background-color: #fcfcfc;
 //     font-style: italic;
 // }
