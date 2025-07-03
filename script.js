@@ -6,7 +6,8 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let supabaseClient = null; // Will be initialized on DOMContentLoaded
 
 // Global DOM Element References (will be set on DOMContentLoaded)
-let todoTitleInput, todoCategorySelect, addTodoButton, todoList, initialMessage;
+// เปลี่ยนชื่อตัวแปรจาก todoCategorySelect เป็น subjectSelect
+let todoTitleInput, subjectSelect, addTodoButton, todoList, initialMessage;
 
 // --- Utility Functions for Console Logging ---
 const log = (message, ...args) => console.log(`[APP LOG]: ${message}`, ...args);
@@ -25,7 +26,7 @@ async function fetchTodos() {
 
     try {
         const { data, error: dbError } = await supabaseClient
-            .from('todos') // Make sure your table name is 'todos'
+            .from('todos') // ตรวจสอบว่าชื่อตารางของคุณยังเป็น 'todos'
             .select('*')
             .order('created_at', { ascending: false });
 
@@ -84,7 +85,7 @@ function renderTodos(todos) {
             <input type="checkbox" class="todo-checkbox" ${todo.is_done ? 'checked' : ''}>
             <div class="todo-content">
                 <span class="todo-title">${todo.title}</span>
-                <span class="todo-category">${todo.category}</span>
+                <span class="todo-category">${todo.subject}</span> 
             </div>
             <button class="delete-button">ลบ</button>
         `;
@@ -103,18 +104,19 @@ function renderTodos(todos) {
  */
 async function addTodo() {
     const title = todoTitleInput.value.trim();
-    const category = todoCategorySelect.value;
+    // ใช้ subject แทน category
+    const subject = subjectSelect.value; 
 
-    log('Attempting to add todo:', { title, category });
+    log('Attempting to add todo:', { title, subject });
 
     if (!title) {
         alert('กรุณาใส่สิ่งที่ต้องทำ');
         warn('Add todo failed: Missing title.');
         return;
     }
-    if (!category) {
-        alert('กรุณาเลือกหมวดหมู่');
-        warn('Add todo failed: Missing category.');
+    if (!subject) { // ตรวจสอบ subject
+        alert('กรุณาเลือกวิชา');
+        warn('Add todo failed: Missing subject.');
         return;
     }
 
@@ -124,7 +126,8 @@ async function addTodo() {
     try {
         const { data, error: dbError } = await supabaseClient
             .from('todos')
-            .insert([{ title: title, category: category, is_done: false }]);
+            // ส่งค่า title และ subject เข้าไปในคอลัมน์ title และ subject ของ Supabase
+            .insert([{ title: title, subject: subject, is_done: false }]); 
 
         if (dbError) {
             error('Error adding todo to Supabase:', dbError.message);
@@ -134,7 +137,7 @@ async function addTodo() {
 
         log('Todo added successfully:', data);
         todoTitleInput.value = ''; // Clear input
-        todoCategorySelect.value = ''; // Reset select
+        subjectSelect.value = ''; // Reset select (ใช้ subjectSelect)
         fetchTodos(); // Refresh the list
     } catch (e) {
         error('Critical error in addTodo (try/catch):', e.message, e);
@@ -182,7 +185,7 @@ async function toggleTodoStatus(event) {
  * Deletes a todo item from Supabase.
  * @param {Event} event - The click event from the delete button.
  */
-async function deleteTodo(event) {
+async function deleteTask(event) {
     const todoItem = event.target.closest('.todo-item');
     const todoId = todoItem.dataset.id;
 
@@ -240,13 +243,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Get DOM Element References
     todoTitleInput = document.getElementById('todoTitleInput');
-    todoCategorySelect = document.getElementById('todoCategorySelect');
+    // เปลี่ยนมาอ้างอิง subjectSelect แทน todoCategorySelect
+    subjectSelect = document.getElementById('subjectSelect'); 
     addTodoButton = document.getElementById('addTodoButton');
     todoList = document.getElementById('todoList');
     initialMessage = document.getElementById('initialMessage');
 
     // Validate if critical DOM elements are found
-    if (!todoTitleInput || !todoCategorySelect || !addTodoButton || !todoList || !initialMessage) {
+    if (!todoTitleInput || !subjectSelect || !addTodoButton || !todoList || !initialMessage) { // ใช้ subjectSelect
         error('One or more critical DOM elements not found. Check your index.html IDs.');
         alert('เกิดข้อผิดพลาด: ไม่พบส่วนประกอบสำคัญของหน้าเว็บ. โปรดตรวจสอบ ID ใน HTML.');
         return; // Stop execution if elements are missing
