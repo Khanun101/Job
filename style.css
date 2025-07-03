@@ -147,7 +147,6 @@ body {
     background-color: var(--primary-dark);
 }
 
-
 /* Todo List Section */
 .todo-list {
     display: flex;
@@ -345,7 +344,7 @@ body {
 #viewTasksBySubjectView {
     padding-top: 15px; /* Adjust padding for heading */
 }
-#viewTasksBySubjectView h2 {
+.view-title {
     text-align: center;
     color: var(--primary-dark);
     font-size: 2rem;
@@ -454,7 +453,7 @@ body {
         font-size: 0.8rem;
     }
 
-    #viewTasksBySubjectView h2 {
+    .view-title {
         font-size: 1.8rem;
     }
     .subject-group h3 {
