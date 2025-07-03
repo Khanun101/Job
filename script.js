@@ -3,19 +3,18 @@
 const SUPABASE_URL = 'https://xoscoszdlzchwyisvxbp.supabase.co'; // Your Project URL
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhvc2Nvc3pkbHpjaHd5aXN2eGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NDIwNzIsImV4cCI6MjA2NzExODA3Mn0.nZhld0oB8vmwvLzwhxhISuD6D-inHP7UVKhYzDfr6KY'; // Your Anon Public Key
 
-let supabaseClient = null; // Will be initialized on DOMContentLoaded
+let supabaseClient = null; // Will be initialized when DOM is ready
 
-// Global DOM Element References
-let todoTitleInput, subjectSelect, addTodoButton, todoList, initialMessage;
-let subjectFilterButtons;
+// --- DOM Element References ---
+let elements = {};
+const REQUIRED_ELEMENT_IDS = [
+    'todoTitleInput', 'subjectSelect', 'addTodoButton', 'todoList', 'initialMessage',
+    'subjectFilterButtons', 'hamburgerMenu', 'sideNav', 'closeNav', 'overlay',
+    'showAddTodoView', 'showViewTasksView', 'addTodoView', 'viewTasksBySubjectView',
+    'tasksBySubjectContainer'
+];
 
-// New: Menu and View Elements
-let hamburgerMenu, sideNav, closeNav, overlay;
-let showAddTodoViewLink, showViewTasksViewLink;
-let addTodoView, viewTasksBySubjectView;
-let tasksBySubjectContainer; // Container for grouped tasks
-
-let currentFilterSubject = 'all'; // Default filter is 'all'
+let currentFilterSubject = 'all'; // Default filter for the main list view
 
 // --- Utility Functions for Console Logging ---
 const log = (message, ...args) => console.log(`[APP LOG]: ${message}`, ...args);
@@ -25,29 +24,28 @@ const error = (message, ...args) => console.error(`[APP ERROR]: ${message}`, ...
 // --- Core Application Functions ---
 
 /**
- * Fetches todos from Supabase based on the current filter and renders them.
- * This function is primarily used for the 'Add Todo' view (addTodoView).
+ * Fetches todos from Supabase based on the current filter and renders them
+ * to the main `todoList` element (for the "Add New Task" view).
  */
 async function fetchTodos() {
-    log(`Attempting to fetch todos for default view with filter: ${currentFilterSubject || 'None'}`);
-    initialMessage.textContent = 'กำลังโหลดรายการ...';
-    initialMessage.className = 'initial-message'; // Reset message class
+    log(`Attempting to fetch todos for default view with filter: ${currentFilterSubject}`);
+    elements.initialMessage.textContent = 'กำลังโหลดรายการ...';
+    elements.initialMessage.className = 'initial-message'; // Reset class
 
     try {
         let query = supabaseClient.from('todos').select('*');
 
-        // Apply filter if a specific subject is selected
         if (currentFilterSubject !== 'all') {
-            query = query.eq('subject', currentFilterSubject); // Filter by subject column
+            query = query.eq('subject', currentFilterSubject);
         }
 
         const { data, error: dbError } = await query.order('created_at', { ascending: false });
 
         if (dbError) {
             error('Error fetching todos:', dbError.message);
-            initialMessage.textContent = `เกิดข้อผิดพลาดในการดึงข้อมูล: ${dbError.message}`;
-            initialMessage.className = 'error-message';
-            todoList.innerHTML = ''; // Clear any existing items
+            elements.initialMessage.textContent = `เกิดข้อผิดพลาดในการดึงข้อมูล: ${dbError.message}`;
+            elements.initialMessage.className = 'error-message';
+            elements.todoList.innerHTML = ''; // Clear list on error
             return;
         }
 
@@ -55,60 +53,52 @@ async function fetchTodos() {
         renderTodos(data);
     } catch (e) {
         error('Critical error in fetchTodos (try/catch):', e.message, e);
-        initialMessage.textContent = `เกิดข้อผิดพลาดร้ายแรง: ${e.message}`;
-        initialMessage.className = 'error-message';
-        todoList.innerHTML = ''; // Clear any existing items
+        elements.initialMessage.textContent = `เกิดข้อผิดพลาดร้ายแรง: ${e.message}`;
+        elements.initialMessage.className = 'error-message';
+        elements.todoList.innerHTML = ''; // Clear list on error
     }
 }
 
 /**
- * Renders an array of todo items to the UI for the default list view.
- * @param {Array<Object>} todos - An array of todo objects from Supabase.
+ * Renders an array of todo items into the `todoList` element.
+ * @param {Array<Object>} todos - Array of todo objects.
  */
 function renderTodos(todos) {
-    log('Rendering todos for default list view:', todos);
+    log('Rendering todos for main list view:', todos);
 
-    // Ensure todoList element exists
-    if (!todoList) {
-        error('todoList element not found during renderTodos.');
-        return;
-    }
-
-    todoList.innerHTML = ''; // Clear current list
+    elements.todoList.innerHTML = ''; // Clear existing list items
 
     if (!todos || todos.length === 0) {
-        initialMessage.textContent = `ยังไม่มีสิ่งที่ต้องทำสำหรับ ${currentFilterSubject === 'all' ? 'ทุกวิชา' : currentFilterSubject}! เพิ่มใหม่ได้เลย!`;
-        initialMessage.className = 'no-todos-message';
-        todoList.appendChild(initialMessage); // Show the message
-        log('No todos to display in default list view.');
+        elements.initialMessage.textContent = `ยังไม่มีสิ่งที่ต้องทำสำหรับ ${currentFilterSubject === 'all' ? 'ทุกวิชา' : currentFilterSubject}! เพิ่มใหม่ได้เลย!`;
+        elements.initialMessage.className = 'no-todos-message';
+        elements.todoList.appendChild(elements.initialMessage);
+        log('No todos to display in main list view.');
         return;
     }
 
-    // Hide initial/empty message if todos exist
-    if (initialMessage.parentNode === todoList) {
-        todoList.removeChild(initialMessage);
+    // Remove the initial message if items exist
+    if (elements.initialMessage.parentNode === elements.todoList) {
+        elements.todoList.removeChild(elements.initialMessage);
     }
 
     todos.forEach(todo => {
         const todoItem = document.createElement('div');
         todoItem.className = `todo-item ${todo.is_done ? 'done' : ''}`;
-        todoItem.dataset.id = todo.id; // Store Supabase ID for operations
+        todoItem.dataset.id = todo.id; // Store ID for future operations
 
         todoItem.innerHTML = `
             <input type="checkbox" class="todo-checkbox" ${todo.is_done ? 'checked' : ''}>
             <div class="todo-content">
                 <span class="todo-title">${todo.title}</span>
-                <span class="todo-category">${todo.subject}</span> 
+                <span class="todo-category">${todo.subject}</span>
             </div>
             <button class="delete-button">ลบ</button>
         `;
 
-        // Add event listeners for the new elements
         todoItem.querySelector('.todo-checkbox').addEventListener('change', toggleTodoStatus);
         todoItem.querySelector('.delete-button').addEventListener('click', deleteTask);
 
-        todoList.appendChild(todoItem);
-        // log(`Todo item "${todo.title}" (ID: ${todo.id}) added to UI.`); // Optional: Too many logs
+        elements.todoList.appendChild(todoItem);
     });
 }
 
@@ -116,8 +106,8 @@ function renderTodos(todos) {
  * Adds a new todo item to Supabase.
  */
 async function addTodo() {
-    const title = todoTitleInput.value.trim();
-    const subject = subjectSelect.value; 
+    const title = elements.todoTitleInput.value.trim();
+    const subject = elements.subjectSelect.value;
 
     log('Attempting to add todo:', { title, subject });
 
@@ -126,19 +116,19 @@ async function addTodo() {
         warn('Add todo failed: Missing title.');
         return;
     }
-    if (!subject) { 
+    if (!subject) {
         alert('กรุณาเลือกวิชา');
         warn('Add todo failed: Missing subject.');
         return;
     }
 
-    addTodoButton.disabled = true;
-    addTodoButton.textContent = 'กำลังเพิ่ม...';
+    elements.addTodoButton.disabled = true;
+    elements.addTodoButton.textContent = 'กำลังเพิ่ม...';
 
     try {
         const { data, error: dbError } = await supabaseClient
             .from('todos')
-            .insert([{ title: title, subject: subject, is_done: false }]); 
+            .insert([{ title: title, subject: subject, is_done: false }]);
 
         if (dbError) {
             error('Error adding todo to Supabase:', dbError.message);
@@ -147,18 +137,19 @@ async function addTodo() {
         }
 
         log('Todo added successfully:', data);
-        todoTitleInput.value = ''; // Clear input
-        subjectSelect.value = ''; // Reset select
-        fetchTodos(); // Refresh the list in the current (addTodoView) view
-        // If the other view (viewTasksBySubjectView) is currently visible,
-        // it should also be refreshed to show the new item.
-        // We'll handle this when switching views for simplicity.
+        elements.todoTitleInput.value = ''; // Clear input
+        elements.subjectSelect.value = ''; // Reset select
+        fetchTodos(); // Refresh the main todo list
+        // If the grouped view is active, trigger a refresh for it too
+        if (!elements.viewTasksBySubjectView.classList.contains('hidden')) {
+            fetchAndRenderTasksBySubject();
+        }
     } catch (e) {
         error('Critical error in addTodo (try/catch):', e.message, e);
         alert(`เกิดข้อผิดพลาดร้ายแรงในการเพิ่ม: ${e.message}`);
     } finally {
-        addTodoButton.disabled = false;
-        addTodoButton.textContent = 'เพิ่ม';
+        elements.addTodoButton.disabled = false;
+        elements.addTodoButton.textContent = 'เพิ่ม';
     }
 }
 
@@ -182,16 +173,16 @@ async function toggleTodoStatus(event) {
         if (dbError) {
             error('Error updating todo status:', dbError.message);
             alert(`เกิดข้อผิดพลาดในการอัปเดตสถานะ: ${dbError.message}`);
-            event.target.checked = !isDone; // Revert checkbox state
+            event.target.checked = !isDone; // Revert checkbox state on error
             return;
         }
 
         log('Todo status updated successfully:', { todoId, isDone });
-        todoItem.classList.toggle('done', isDone); // Apply/remove 'done' class
+        todoItem.classList.toggle('done', isDone); // Update UI class
     } catch (e) {
         error('Critical error in toggleTodoStatus (try/catch):', e.message, e);
         alert(`เกิดข้อผิดพลาดร้ายแรงในการอัปเดต: ${e.message}`);
-        event.target.checked = !isDone; // Revert checkbox state
+        event.target.checked = !isDone; // Revert checkbox state on critical error
     }
 }
 
@@ -223,17 +214,17 @@ async function deleteTask(event) {
         }
 
         log('Todo deleted successfully:', todoId);
-        todoItem.remove(); // Remove from UI
+        todoItem.remove(); // Remove item from UI
 
-        // If no todos left, show the empty message
-        if (todoList.children.length === 0) {
-            initialMessage.textContent = `ยังไม่มีสิ่งที่ต้องทำสำหรับ ${currentFilterSubject === 'all' ? 'ทุกวิชา' : currentFilterSubject}! เพิ่มใหม่ได้เลย!`;
-            initialMessage.className = 'no-todos-message';
-            todoList.appendChild(initialMessage);
+        // If list becomes empty, show the message
+        if (elements.todoList.children.length === 0) {
+            elements.initialMessage.textContent = `ยังไม่มีสิ่งที่ต้องทำสำหรับ ${currentFilterSubject === 'all' ? 'ทุกวิชา' : currentFilterSubject}! เพิ่มใหม่ได้เลย!`;
+            elements.initialMessage.className = 'no-todos-message';
+            elements.todoList.appendChild(elements.initialMessage);
         }
-        // If the other view is open/rendered, it also needs refresh after deletion
-        if (!viewTasksBySubjectView.classList.contains('hidden')) {
-             fetchAndRenderTasksBySubject(); // Refresh the grouped view if it's active
+        // If the grouped view is active, trigger a refresh for it too
+        if (!elements.viewTasksBySubjectView.classList.contains('hidden')) {
+            fetchAndRenderTasksBySubject();
         }
     } catch (e) {
         error('Critical error in deleteTask (try/catch):', e.message, e);
@@ -247,83 +238,81 @@ async function deleteTask(event) {
  */
 function handleSubjectFilterClick(event) {
     const clickedButton = event.target.closest('.filter-button');
-    if (!clickedButton) return; // Not a filter button
-
-    const subjectToFilter = clickedButton.dataset.subjectFilter;
+    if (!clickedButton) return;
 
     // Remove 'active' class from all filter buttons
-    const allFilterButtons = subjectFilterButtons.querySelectorAll('.filter-button');
+    const allFilterButtons = elements.subjectFilterButtons.querySelectorAll('.filter-button');
     allFilterButtons.forEach(button => button.classList.remove('active'));
 
     // Add 'active' class to the clicked button
     clickedButton.classList.add('active');
 
-    // Update the current filter and re-fetch todos
-    currentFilterSubject = subjectToFilter;
+    // Update filter and re-fetch todos
+    currentFilterSubject = clickedButton.dataset.subjectFilter;
     log(`Filter changed to: ${currentFilterSubject}`);
     fetchTodos();
 }
 
-
-// --- New: Menu and View Management Functions ---
+// --- Menu and View Management Functions ---
 
 function openNav() {
-    sideNav.style.width = "250px"; // Adjust width as needed
-    overlay.style.display = "block";
+    elements.sideNav.style.width = "250px"; // Adjust width as needed
+    elements.overlay.style.display = "block";
     log('Side navigation opened.');
 }
 
 function closeNav() {
-    sideNav.style.width = "0";
-    overlay.style.display = "none";
+    elements.sideNav.style.width = "0";
+    elements.overlay.style.display = "none";
     log('Side navigation closed.');
 }
 
 /**
- * Shows a specific application view and hides others.
+ * Shows a specific application view and hides all others.
  * @param {HTMLElement} viewToShow - The DOM element of the view to show.
  */
 function showView(viewToShow) {
-    // Hide all views first
+    // Hide all views
     document.querySelectorAll('.app-view').forEach(view => {
         view.classList.add('hidden');
     });
     // Show the selected view
     viewToShow.classList.remove('hidden');
     log(`Switched to view: ${viewToShow.id}`);
-    closeNav(); // Close navigation after selection
+    closeNav(); // Close navigation after view selection
 }
 
 /**
- * Fetches all tasks and groups them by subject for the 'View Tasks by Subject' page.
+ * Fetches all tasks and groups them by subject for the "View Tasks By Subject" view.
  */
 async function fetchAndRenderTasksBySubject() {
     log('Attempting to fetch and render tasks by subject for grouped view...');
-    tasksBySubjectContainer.innerHTML = '<p class="initial-message">กำลังโหลดงานทั้งหมด...</p>';
-    tasksBySubjectContainer.classList.remove('no-todos-message', 'error-message'); // Clear previous state classes
+    elements.tasksBySubjectContainer.innerHTML = '<p class="initial-message">กำลังโหลดงานทั้งหมด...</p>';
+    elements.tasksBySubjectContainer.classList.remove('no-todos-message', 'error-message'); // Clear previous state classes
 
     try {
+        // Fetch all tasks, ordered by subject then by creation date
         const { data, error: dbError } = await supabaseClient
             .from('todos')
             .select('*')
-            .order('subject', { ascending: true }) // Order by subject first
-            .order('created_at', { ascending: false }); // Then by creation date
+            .order('subject', { ascending: true })
+            .order('created_at', { ascending: false });
 
         if (dbError) {
             error('Error fetching all tasks for grouped view:', dbError.message);
-            tasksBySubjectContainer.innerHTML = `<p class="error-message">เกิดข้อผิดพลาดในการดึงข้อมูล: ${dbError.message}</p>`;
-            tasksBySubjectContainer.classList.add('error-message');
+            elements.tasksBySubjectContainer.innerHTML = `<p class="error-message">เกิดข้อผิดพลาดในการดึงข้อมูล: ${dbError.message}</p>`;
+            elements.tasksBySubjectContainer.classList.add('error-message');
             return;
         }
 
         if (!data || data.length === 0) {
-            tasksBySubjectContainer.innerHTML = '<p class="no-todos-message">ยังไม่มีงานในระบบเลย!</p>';
-            tasksBySubjectContainer.classList.add('no-todos-message');
+            elements.tasksBySubjectContainer.innerHTML = '<p class="no-todos-message">ยังไม่มีงานในระบบเลย!</p>';
+            elements.tasksBySubjectContainer.classList.add('no-todos-message');
             log('No tasks to display in grouped view.');
             return;
         }
 
-        // Group tasks by subject
+        // Group tasks by their subject
         const tasksGroupedBySubject = data.reduce((acc, task) => {
             if (!acc[task.subject]) {
                 acc[task.subject] = [];
@@ -332,37 +321,37 @@ async function fetchAndRenderTasksBySubject() {
             return acc;
         }, {});
 
-        tasksBySubjectContainer.innerHTML = ''; // Clear previous content
+        elements.tasksBySubjectContainer.innerHTML = ''; // Clear previous content
 
         // Render each subject group
         const sortedSubjects = Object.keys(tasksGroupedBySubject).sort(); // Sort subjects alphabetically
         sortedSubjects.forEach(subject => {
-            const subjectGroup = document.createElement('div');
-            subjectGroup.className = 'subject-group';
-            subjectGroup.innerHTML = `<h3>${subject}</h3><div class="todo-list"></div>`;
+            const subjectGroupDiv = document.createElement('div');
+            subjectGroupDiv.className = 'subject-group';
+            subjectGroupDiv.innerHTML = `<h3>${subject}</h3><div class="todo-list"></div>`;
 
-            const todoListForSubject = subjectGroup.querySelector('.todo-list');
+            const todoListForSubject = subjectGroupDiv.querySelector('.todo-list');
 
             tasksGroupedBySubject[subject].forEach(todo => {
                 const todoItem = document.createElement('div');
                 todoItem.className = `todo-item ${todo.is_done ? 'done' : ''}`;
-                // For this view, we're not making them interactive (no checkbox/delete button)
+                // In this view, we make items read-only (no checkboxes/delete buttons)
                 todoItem.innerHTML = `
                     <div class="todo-content">
                         <span class="todo-title">${todo.title}</span>
-                        <span class="todo-category">${todo.is_done ? 'เสร็จแล้ว' : 'ยังไม่เสร็จ'}</span>
+                        <span class="todo-category">${todo.is_done ? 'สถานะ: เสร็จแล้ว' : 'สถานะ: ยังไม่เสร็จ'}</span>
                     </div>
                 `;
                 todoListForSubject.appendChild(todoItem);
             });
-            tasksBySubjectContainer.appendChild(subjectGroup);
+            elements.tasksBySubjectContainer.appendChild(subjectGroupDiv);
             log(`Rendered group for subject: ${subject}`);
         });
 
     } catch (e) {
         error('Critical error in fetchAndRenderTasksBySubject (try/catch):', e.message, e);
-        tasksBySubjectContainer.innerHTML = `<p class="error-message">เกิดข้อผิดพลาดร้ายแรง: ${e.message}</p>`;
-        tasksBySubjectContainer.classList.add('error-message');
+        elements.tasksBySubjectContainer.innerHTML = `<p class="error-message">เกิดข้อผิดพลาดร้ายแรง: ${e.message}</p>`;
+        elements.tasksBySubjectContainer.classList.add('error-message');
     }
 }
 
@@ -372,73 +361,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 1. Initialize Supabase Client
     try {
-        // 'supabase' object comes from the CDN script loaded in index.html
         if (typeof supabase === 'undefined' || !supabase.createClient) {
-            throw new Error("Supabase client library not found. Make sure <script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'></script> is loaded correctly in index.html.");
+            throw new Error("Supabase client library not found. Make sure Supabase CDN script is loaded correctly in index.html.");
         }
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         log('Supabase client initialized successfully.');
     } catch (e) {
         error('Failed to initialize Supabase client:', e.message, e);
-        alert(`ข้อผิดพลาดร้ายแรง: ไม่สามารถสร้าง Supabase Client ได้. ${e.message}. โปรดตรวจสอบ Console และไฟล์ index.html.`);
-        return; // Stop execution if client cannot be initialized
+        alert(`ข้อผิดพลาดร้ายแรง: ไม่สามารถเชื่อมต่อ Supabase ได้. ${e.message}. โปรดตรวจสอบ Console และไฟล์ index.html/script.js.`);
+        return;
     }
 
-    // 2. Get DOM Element References
-    todoTitleInput = document.getElementById('todoTitleInput');
-    subjectSelect = document.getElementById('subjectSelect');
-    addTodoButton = document.getElementById('addTodoButton');
-    todoList = document.getElementById('todoList');
-    initialMessage = document.getElementById('initialMessage');
-    subjectFilterButtons = document.getElementById('subjectFilterButtons');
+    // 2. Get DOM Element References and Validate
+    let allElementsFound = true;
+    REQUIRED_ELEMENT_IDS.forEach(id => {
+        const element = document.getElementById(id);
+        if (!element) {
+            error(`Critical DOM element with ID "${id}" not found.`);
+            allElementsFound = false;
+        }
+        elements[id] = element; // Store reference
+    });
 
-    // New: Get Menu and View References
-    hamburgerMenu = document.getElementById('hamburgerMenu');
-    sideNav = document.getElementById('sideNav');
-    closeNav = document.getElementById('closeNav');
-    overlay = document.getElementById('overlay');
-    showAddTodoViewLink = document.getElementById('showAddTodoView');
-    showViewTasksViewLink = document.getElementById('showViewTasksView');
-    addTodoView = document.getElementById('addTodoView');
-    viewTasksBySubjectView = document.getElementById('viewTasksBySubjectView');
-    tasksBySubjectContainer = document.getElementById('tasksBySubjectContainer');
-
-    // Validate if critical DOM elements are found (including new ones)
-    if (!todoTitleInput || !subjectSelect || !addTodoButton || !todoList || !initialMessage || !subjectFilterButtons ||
-        !hamburgerMenu || !sideNav || !closeNav || !overlay || !showAddTodoViewLink || !showViewTasksViewLink ||
-        !addTodoView || !viewTasksBySubjectView || !tasksBySubjectContainer) {
-        error('One or more critical DOM elements not found. Check your index.html IDs.');
+    if (!allElementsFound) {
         alert('เกิดข้อผิดพลาด: ไม่พบส่วนประกอบสำคัญของหน้าเว็บ. โปรดตรวจสอบ ID ใน HTML.');
         return; // Stop execution if elements are missing
     }
     log('All critical DOM elements referenced successfully.');
 
     // 3. Attach Event Listeners
-    addTodoButton.addEventListener('click', addTodo);
-    log('Add Todo button event listener attached.');
+    elements.addTodoButton.addEventListener('click', addTodo);
+    elements.subjectFilterButtons.addEventListener('click', handleSubjectFilterClick);
 
-    subjectFilterButtons.addEventListener('click', handleSubjectFilterClick);
-    log('Subject filter buttons event listener attached.');
+    // Menu Event Listeners
+    elements.hamburgerMenu.addEventListener('click', openNav);
+    elements.closeNav.addEventListener('click', closeNav);
+    elements.overlay.addEventListener('click', closeNav); // Close menu when clicking outside
 
-    // New: Menu Event Listeners
-    hamburgerMenu.addEventListener('click', openNav);
-    closeNav.addEventListener('click', closeNav);
-    overlay.addEventListener('click', closeNav); // Close menu when clicking outside
-
-    // New: View Navigation Event Listeners
-    showAddTodoViewLink.addEventListener('click', (event) => {
+    // View Navigation Event Listeners
+    elements.showAddTodoView.addEventListener('click', (event) => {
         event.preventDefault(); // Prevent default link behavior
-        showView(addTodoView);
+        showView(elements.addTodoView);
         fetchTodos(); // Refresh todos for this view
     });
-    showViewTasksViewLink.addEventListener('click', (event) => {
+    elements.showViewTasksView.addEventListener('click', (event) => {
         event.preventDefault(); // Prevent default link behavior
-        showView(viewTasksBySubjectView);
+        showView(elements.viewTasksBySubjectView);
         fetchAndRenderTasksBySubject(); // Fetch and render for the grouped view
     });
 
-    // 4. Initial Load of Todos (show the add todo view by default)
-    showView(addTodoView); // Ensure the correct view is shown initially
+    // 4. Initial Load: Show the "Add Todo" view and fetch its data
+    showView(elements.addTodoView);
     fetchTodos();
 });
 
