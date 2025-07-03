@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกงาน</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>บันทึกงานของฉัน</h1>
+
+        <div class="input-section">
+            <select id="subjectSelect">
+                <option value="">เลือกวิชา</option>
+                <option value="เคมี">เคมี</option>
+                <option value="ฟิสิกส์">ฟิสิกส์</option>
+                <option value="คณิตศาสตร์เพิ่มเติม">คณิตศาสตร์เพิ่มเติม</option>
+                <option value="คณิตศาสตร์พื้นฐาน">คณิตศาสตร์พื้นฐาน</option>
+                <option value="ภาษาไทย">ภาษาไทย</option>
+                <option value="ดนตรี">ดนตรี</option>
+                <option value="IS">IS</option>
+                <option value="เทคโนโลยี">เทคโนโลยี</option>
+                <option value="อังกฤษ">อังกฤษ</option>
+                <option value="ประวัติศาสตร์สากล">ประวัติศาสตร์สากล</option>
+                <option value="การงาน">การงาน</option>
+                <option value="สังคม">สังคม</option>
+                <option value="ชีวะ">ชีวะ</option>
+                <option value="พละ">พละ</option>
+            </select>
+            <input type="text" id="taskInput" placeholder="เพิ่มงานที่ต้องทำ...">
+            <button id="addTaskButton">เพิ่มงาน</button>
+        </div>
+
+        <div class="task-list" id="taskList">
+            </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
