@@ -1,290 +1,463 @@
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
-
 :root {
     --primary-color: #4CAF50; /* Green */
     --primary-dark: #388E3C;
+    --primary-light: #81C784;
     --secondary-color: #2196F3; /* Blue */
     --accent-color: #FFC107; /* Amber */
-    --text-color: #333;
-    --light-text-color: #666;
-    --bg-color: #e8f5e9; /* Light green background */
+    --background-color: #f4f7f6;
     --card-bg: #ffffff;
+    --text-color: #333333;
+    --light-text-color: #666666;
     --border-color: #e0e0e0;
-    --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.1);
+    --shadow-light: 0 4px 8px rgba(0, 0, 0, 0.05);
+    --shadow-medium: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
 body {
     font-family: 'Sarabun', sans-serif;
-    background-color: var(--bg-color);
     margin: 0;
     padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     min-height: 100vh;
-    color: var(--text-color);
-    box-sizing: border-box;
+    padding-top: 60px; /* Space for hamburger menu */
 }
 
 .app-container {
     background-color: var(--card-bg);
     border-radius: 15px;
     box-shadow: var(--shadow-medium);
-    padding: 30px;
-    margin: 25px;
     width: 100%;
-    max-width: 800px;
+    max-width: 700px;
+    margin: 20px;
+    padding: 25px;
     box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    gap: 25px;
+    overflow: hidden; /* For rounded corners */
 }
 
 .app-header {
     text-align: center;
+    margin-bottom: 25px;
     padding-bottom: 15px;
     border-bottom: 1px solid var(--border-color);
 }
 
 .app-header h1 {
-    margin: 0;
-    font-size: 2.8rem;
     color: var(--primary-dark);
+    font-size: 2.5rem;
+    margin: 0;
     font-weight: 700;
-    letter-spacing: -0.5px;
 }
 
+/* Add Todo Section */
 .add-todo-section {
     display: flex;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
     gap: 15px;
-    flex-wrap: wrap;
-    justify-content: center;
-    padding: 15px 0;
-    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 25px;
+    align-items: center;
 }
 
 .add-todo-section input[type="text"],
 .add-todo-section select {
-    flex: 2; /* Allow input to take more space */
-    padding: 14px 18px;
+    flex-grow: 1; /* Allow input and select to take available space */
+    padding: 12px 18px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    font-size: 1.1rem;
-    font-family: 'Sarabun', sans-serif;
+    font-size: 1rem;
     color: var(--text-color);
     outline: none;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    min-width: 150px; /* Ensure input is not too small */
-}
-
-.add-todo-section input[type="text"]::placeholder {
-    color: var(--light-text-color);
+    transition: border-color 0.3s ease;
+    min-width: 150px; /* Ensure they don't get too small */
 }
 
 .add-todo-section input[type="text"]:focus,
 .add-todo-section select:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
-}
-
-.add-todo-section select {
-    flex: 1; /* Category select can be smaller */
-    max-width: 180px; /* Limit max width */
 }
 
 .add-todo-section button {
-    flex-shrink: 0; /* Don't shrink the button */
     background-color: var(--primary-color);
     color: white;
-    padding: 14px 25px;
+    padding: 12px 25px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: background-color 0.3s ease;
+    flex-shrink: 0; /* Prevent button from shrinking */
 }
 
 .add-todo-section button:hover {
     background-color: var(--primary-dark);
-    transform: translateY(-2px);
-}
-
-.add-todo-section button:active {
-    transform: translateY(0);
 }
 
 .add-todo-section button:disabled {
-    background-color: #ccc;
+    background-color: var(--primary-light);
     cursor: not-allowed;
 }
 
-.todo-list-section {
-    padding-top: 10px;
+/* Filter Section */
+.filter-section {
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center;
+    overflow-x: auto; /* Allow horizontal scrolling if buttons are too many */
+    white-space: nowrap; /* Prevent wrapping */
+    padding-bottom: 10px; /* Adjust padding */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    margin-bottom: 25px;
 }
 
+.filter-buttons {
+    display: inline-flex; /* Keep buttons on one line */
+    gap: 10px;
+    padding: 5px; /* Padding inside the scrollable area */
+}
+
+.filter-button {
+    background-color: #f0f0f0;
+    color: var(--text-color);
+    padding: 10px 18px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px; /* Rounded corners for buttons */
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+}
+
+.filter-button:hover {
+    background-color: #e0e0e0;
+}
+
+.filter-button.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-dark);
+}
+
+.filter-button.active:hover {
+    background-color: var(--primary-dark);
+}
+
+
+/* Todo List Section */
 .todo-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 15px;
 }
 
 .todo-item {
     display: flex;
     align-items: center;
     background-color: var(--card-bg);
-    padding: 18px 22px;
-    border-radius: 10px;
-    box-shadow: var(--shadow-light);
     border: 1px solid var(--border-color);
-    transition: all 0.3s ease;
+    border-radius: 10px;
+    padding: 15px 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .todo-item:hover {
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-    transform: translateY(-3px);
-}
-
-.todo-item.done {
-    background-color: #e0f2f1; /* Light teal for done items */
-    text-decoration: line-through;
-    opacity: 0.8;
-    border-color: #b2dfdb;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
 }
 
 .todo-checkbox {
-    margin-right: 20px;
-    min-width: 24px;
-    min-height: 24px;
+    width: 20px;
+    height: 20px;
+    margin-right: 15px;
     cursor: pointer;
-    accent-color: var(--primary-color);
-    border: 2px solid var(--primary-color);
+    accent-color: var(--primary-color); /* Colors the checkbox itself */
 }
 
 .todo-content {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    text-align: left;
 }
 
 .todo-title {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 600;
     color: var(--text-color);
-    line-height: 1.4;
+    word-wrap: break-word; /* Allow long words to break */
+    overflow-wrap: break-word; /* For wider browser support */
 }
 
 .todo-category {
     font-size: 0.85rem;
     color: var(--light-text-color);
-    margin-top: 5px;
-    background-color: var(--bg-color);
-    padding: 4px 10px;
-    border-radius: 6px;
-    display: inline-block;
+    margin-top: 3px;
     font-weight: 400;
-    border: 1px solid #dcdcdc;
+}
+
+.todo-item.done .todo-title {
+    text-decoration: line-through;
+    color: var(--light-text-color);
 }
 
 .delete-button {
-    background-color: #ef5350; /* Red */
+    background-color: #f44336; /* Red */
     color: white;
     border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
+    border-radius: 5px;
+    padding: 8px 12px;
     cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 0.85rem;
     margin-left: 15px;
+    transition: background-color 0.3s ease;
+    flex-shrink: 0;
 }
 
 .delete-button:hover {
     background-color: #d32f2f;
-    transform: scale(1.05);
 }
 
-.delete-button:active {
-    transform: scale(1);
-}
-
-.delete-button:disabled {
-    background-color: #bdbdbd;
-    cursor: not-allowed;
-}
-
-.initial-message,
-.no-todos-message,
-.error-message {
+.initial-message, .no-todos-message, .error-message {
     text-align: center;
-    color: var(--light-text-color);
-    margin-top: 30px;
-    padding: 25px;
-    border: 1px dashed var(--border-color);
-    border-radius: 10px;
-    background-color: var(--bg-color);
-    font-style: italic;
     font-size: 1.1rem;
+    color: var(--light-text-color);
+    padding: 20px;
+    background-color: #f0f0f0;
+    border-radius: 10px;
+    margin-top: 20px;
 }
 
 .error-message {
-    color: #d32f2f; /* Darker red for errors */
-    border-color: #ef9a9a;
-    background-color: #ffebee;
+    color: #d32f2f;
+    background-color: #ffe0e0;
+    border: 1px solid #d32f2f;
 }
 
+/* Footer */
 .app-footer {
     text-align: center;
-    font-size: 0.9rem;
-    color: var(--light-text-color);
-    margin-top: 20px;
-    padding-top: 15px;
+    margin-top: 30px;
+    padding-top: 20px;
     border-top: 1px solid var(--border-color);
+    color: var(--light-text-color);
+    font-size: 0.9rem;
+}
+
+/* Hamburger Menu */
+.hamburger-menu {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 40px;
+    height: 30px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 0;
+    z-index: 1001; /* Above other content */
+}
+
+.hamburger-menu span {
+    display: block;
+    width: 100%;
+    height: 4px;
+    background-color: var(--primary-dark);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+/* Side Navigation Menu */
+.side-nav {
+    height: 100%;
+    width: 0; /* Hidden by default */
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    background-color: #2c3e50; /* Dark background for menu */
+    overflow-x: hidden;
+    transition: 0.5s;
+    padding-top: 60px;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+}
+
+.side-nav .nav-links a {
+    padding: 15px 25px 15px 35px;
+    text-decoration: none;
+    font-size: 1.5rem;
+    color: #ecf0f1; /* Light text for menu items */
+    display: block;
+    transition: 0.3s;
+}
+
+.side-nav .nav-links a:hover {
+    color: var(--primary-color);
+    background-color: #34495e;
+}
+
+.side-nav .close-btn {
+    position: absolute;
+    top: 0;
+    right: 25px;
+    font-size: 36px;
+    margin-left: 50px;
+    color: #ecf0f1;
+    text-decoration: none;
+}
+
+.side-nav .close-btn:hover {
+    color: var(--primary-color);
+}
+
+/* Overlay for dimming background */
+.overlay {
+    position: fixed;
+    display: none;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 999;
+    cursor: pointer;
+}
+
+/* View Management */
+.app-view {
+    display: block; /* Default state for views, handled by JS */
+}
+
+.app-view.hidden {
+    display: none; /* Hide views when 'hidden' class is applied by JS */
+}
+
+/* Styling for View Tasks By Subject */
+#viewTasksBySubjectView {
+    padding-top: 15px; /* Adjust padding for heading */
+}
+#viewTasksBySubjectView h2 {
+    text-align: center;
+    color: var(--primary-dark);
+    font-size: 2rem;
+    margin-bottom: 25px;
+}
+
+.tasks-by-subject-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.subject-group {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow-light);
+}
+
+.subject-group h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--primary-dark);
+    font-size: 1.8rem;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 10px;
+}
+
+.subject-group .todo-list {
+    gap: 10px; /* Smaller gap for grouped items */
+    padding-top: 10px;
+}
+
+/* Adjust .todo-item for grouped view to be more read-only like */
+.subject-group .todo-item {
+    padding: 12px 15px;
+    box-shadow: none; /* Remove extra shadow */
+    border: 1px solid #eee; /* Lighter border */
+    transition: none; /* No hover effect on individual items in grouped view */
+    cursor: default; /* Change cursor to default */
+}
+
+.subject-group .todo-item:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Hide checkbox and delete button in the 'View Tasks' view */
+#viewTasksBySubjectView .todo-item .todo-checkbox,
+#viewTasksBySubjectView .todo-item .delete-button {
+    display: none;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .app-container {
         margin: 15px;
-        padding: 25px;
-        gap: 20px;
+        padding: 15px;
     }
+
     .app-header h1 {
-        font-size: 2.2rem;
+        font-size: 2rem;
     }
+
     .add-todo-section {
         flex-direction: column;
         align-items: stretch;
-        gap: 10px;
     }
+
     .add-todo-section input[type="text"],
     .add-todo-section select,
     .add-todo-section button {
         width: 100%;
-        max-width: none;
+        min-width: unset;
     }
+
+    .add-todo-section select {
+        box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    }
+
+    .filter-section {
+        padding: 10px 0;
+    }
+    .filter-buttons {
+        padding: 5px 0;
+        justify-content: flex-start;
+    }
+    .filter-button {
+        padding: 8px 15px;
+        font-size: 0.85rem;
+    }
+
     .todo-item {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 15px;
-        gap: 10px;
+        flex-direction: row; /* Keep row for now, can change if content overflows */
+        padding: 12px 15px;
     }
-    .todo-checkbox {
-        margin-bottom: 10px;
-        margin-right: 0;
-    }
+
     .todo-content {
-        width: 100%;
-        margin-bottom: 10px;
+        flex-basis: 70%; /* Give content more space */
+        padding-right: 10px;
     }
+    
     .delete-button {
-        align-self: flex-end;
-        margin-left: 0;
-        width: 100%;
+        padding: 6px 10px;
+        font-size: 0.8rem;
     }
-    .todo-title {
-        font-size: 1.15rem;
+
+    #viewTasksBySubjectView h2 {
+        font-size: 1.8rem;
+    }
+    .subject-group h3 {
+        font-size: 1.5rem;
     }
 }
