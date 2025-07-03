@@ -10,38 +10,81 @@
     <script src="script.js"></script>
 </head>
 <body>
+    <button class="hamburger-menu" id="hamburgerMenu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <nav class="side-nav" id="sideNav">
+        <a href="#" class="close-btn" id="closeNav">&times;</a>
+        <div class="nav-links">
+            <a href="#" id="showAddTodoView">เพิ่มงานใหม่</a>
+            <a href="#" id="showViewTasksView">ดูงานทั้งหมด (แยกวิชา)</a>
+        </div>
+    </nav>
+
+    <div class="overlay" id="overlay"></div>
+
     <div class="app-container">
         <header class="app-header">
             <h1>รายการสิ่งที่ต้องทำ</h1>
         </header>
 
-        <section class="add-todo-section">
-            <input type="text" id="todoTitleInput" placeholder="สิ่งที่ต้องทำใหม่...">
-            <select id="subjectSelect">
-                <option value="">เลือกวิชา</option>
-                <option value="เคมี">เคมี</option>
-                <option value="ฟิสิกส์">ฟิสิกส์</option>
-                <option value="คณิตศาสตร์เพิ่มเติม">คณิตศาสตร์เพิ่มเติม</option>
-                <option value="คณิตศาสตร์พื้นฐาน">คณิตศาสตร์พื้นฐาน</option>
-                <option value="ภาษาไทย">ภาษาไทย</option>
-                <option value="ดนตรี">ดนตรี</option>
-                <option value="IS">IS</option>
-                <option value="เทคโนโลยี">เทคโนโลยี</option>
-                <option value="อังกฤษ">อังกฤษ</option>
-                <option value="ประวัติศาสตร์สากล">ประวัติศาสตร์สากล</option>
-                <option value="การงาน">การงาน</option>
-                <option value="สังคม">สังคม</option>
-                <option value="ชีวะ">ชีวะ</option>
-                <option value="พละ">พละ</option>
-            </select>
-            <button id="addTodoButton">เพิ่ม</button>
-        </section>
+        <div id="addTodoView" class="app-view">
+            <section class="add-todo-section">
+                <input type="text" id="todoTitleInput" placeholder="สิ่งที่ต้องทำใหม่...">
+                <select id="subjectSelect">
+                    <option value="">เลือกวิชา</option>
+                    <option value="เคมี">เคมี</option>
+                    <option value="ฟิสิกส์">ฟิสิกส์</option>
+                    <option value="คณิตศาสตร์เพิ่มเติม">คณิตศาสตร์เพิ่มเติม</option>
+                    <option value="คณิตศาสตร์พื้นฐาน">คณิตศาสตร์พื้นฐาน</option>
+                    <option value="ภาษาไทย">ภาษาไทย</option>
+                    <option value="ดนตรี">ดนตรี</option>
+                    <option value="IS">IS</option>
+                    <option value="เทคโนโลยี">เทคโนโลยี</option>
+                    <option value="อังกฤษ">อังกฤษ</option>
+                    <option value="ประวัติศาสตร์สากล">ประวัติศาสตร์สากล</option>
+                    <option value="การงาน">การงาน</option>
+                    <option value="สังคม">สังคม</option>
+                    <option value="ชีวะ">ชีวะ</option>
+                    <option value="พละ">พละ</option>
+                </select>
+                <button id="addTodoButton">เพิ่ม</button>
+            </section>
 
-        <section class="todo-list-section">
-            <div id="todoList" class="todo-list">
-                <p class="initial-message" id="initialMessage">กำลังโหลดรายการ...</p>
-            </div>
-        </section>
+            <section class="filter-section">
+                <div class="filter-buttons" id="subjectFilterButtons">
+                    <button class="filter-button active" data-subject-filter="all">ทั้งหมด</button>
+                    <button class="filter-button" data-subject-filter="เคมี">เคมี</button>
+                    <button class="filter-button" data-subject-filter="ฟิสิกส์">ฟิสิกส์</button>
+                    <button class="filter-button" data-subject-filter="คณิตศาสตร์เพิ่มเติม">คณิตศาสตร์เพิ่มเติม</button>
+                    <button class="filter-button" data-subject-filter="คณิตศาสตร์พื้นฐาน">คณิตศาสตร์พื้นฐาน</button>
+                    <button class="filter-button" data-subject-filter="ภาษาไทย">ภาษาไทย</option>
+                    <button class="filter-button" data-subject-filter="ดนตรี">ดนตรี</button>
+                    <button class="filter-button" data-subject-filter="IS">IS</button>
+                    <button class="filter-button" data-subject-filter="เทคโนโลยี">เทคโนโลยี</button>
+                    <button class="filter-button" data-subject-filter="อังกฤษ">อังกฤษ</button>
+                    <button class="filter-button" data-subject-filter="ประวัติศาสตร์สากล">ประวัติศาสตร์สากล</button>
+                    <button class="filter-button" data-subject-filter="การงาน">การงาน</button>
+                    <button class="filter-button" data-subject-filter="สังคม">สังคม</button>
+                    <button class="filter-button" data-subject-filter="ชีวะ">ชีวะ</button>
+                    <button class="filter-button" data-subject-filter="พละ">พละ</button>
+                </div>
+            </section>
+
+            <section class="todo-list-section">
+                <div id="todoList" class="todo-list">
+                    <p class="initial-message" id="initialMessage">กำลังโหลดรายการ...</p>
+                </div>
+            </section>
+        </div> <div id="viewTasksBySubjectView" class="app-view hidden">
+            <h2>งานทั้งหมดแยกตามวิชา</h2>
+            <div id="tasksBySubjectContainer" class="tasks-by-subject-container">
+                <p class="initial-message">กำลังโหลดงาน...</p>
+                </div>
+        </div>
 
         <footer class="app-footer">
             <p>&copy; 2025 My Todo App</p>
